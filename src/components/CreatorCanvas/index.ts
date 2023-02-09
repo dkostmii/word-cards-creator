@@ -142,8 +142,8 @@ function CreatorCanvas(initialData: CreatorFormData) {
       canvas.width = 400;
       canvas.height = 400;
     } else {
-      canvas.width = 296;
-      canvas.height = 296;
+      canvas.width = 240;
+      canvas.height = 240;
     }
     updateVisibleCanvas();
   }
