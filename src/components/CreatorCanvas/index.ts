@@ -130,58 +130,6 @@ function CreatorCanvas(initialData: CreatorFormData) {
     }
   };
   
-  let smallMatches: boolean = false;
-  let bigMatches: boolean = false;
-
-  const resizeSmall = (matches: boolean) => {
-    if (bigMatches) {
-      return;
-    }
-
-    if (matches) {
-      canvas.width = 400;
-      canvas.height = 400;
-    } else {
-      canvas.width = 240;
-      canvas.height = 240;
-    }
-    updateVisibleCanvas();
-  }
-
-  const resizeBig = (matches: boolean) => {
-    if (smallMatches) {
-      return;
-    }
-
-    if (matches) {
-      canvas.width = 400;
-      canvas.height = 400;
-    } else {
-      canvas.width = 600;
-      canvas.height = 600;
-    }
-    updateVisibleCanvas();
-  }
-
-
-  const bigMqResult = window.matchMedia('(min-width: 1200px)');
-  bigMatches = bigMqResult.matches;
-  resizeBig(bigMatches);
-  
-  bigMqResult.addEventListener('change', e => {
-    bigMatches = e.matches;
-    resizeBig(bigMatches);
-  });
-
-  const smallMqResult = window.matchMedia('(min-width: 600px)');
-  smallMatches = smallMqResult.matches;
-  resizeSmall(smallMatches);
-  
-  smallMqResult.addEventListener('change', e => {
-    smallMatches = e.matches;
-    resizeSmall(smallMatches);
-  });
-
   watermarksDark.onload = () => {
     update(initialData);
   };
