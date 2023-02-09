@@ -1,0 +1,22 @@
+.header
+  display: flex
+  justify-content: space-between
+  align-items: center
+  gap: 1rem
+
+  &__caption
+    font-family: "Exo 2"
+    font-weight: 400
+    font-size: 1.75rem
+    text-align: right
+
+  &__logo
+    width: 125px
+    height: auto
+
+  @media screen and (max-width: 480px)
+    &__caption
+      font-size: 1.25rem
+    
+    &__logo
+      width: 90px
