@@ -130,8 +130,8 @@ function CreatorCanvas(initialData: CreatorFormData) {
     }
   };
 
-  window.matchMedia('(min-width: 1200px)').addEventListener('change', e => {
-    if (e.matches) {
+  const resizeSmall = (matches: boolean) => {
+    if (matches) {
       canvas.width = 600;
       canvas.height = 600;
     } else {
@@ -139,10 +139,10 @@ function CreatorCanvas(initialData: CreatorFormData) {
       canvas.height = 400;
     }
     updateVisibleCanvas();
-  });
+  }
 
-  window.matchMedia('(min-width: 600px)').addEventListener('change', e => {
-    if (e.matches) {
+  const resizeBig = (matches: boolean) => {
+    if (matches) {
       canvas.width = 400;
       canvas.height = 400;
     } else {
@@ -150,6 +150,22 @@ function CreatorCanvas(initialData: CreatorFormData) {
       canvas.height = 320;
     }
     updateVisibleCanvas();
+  }
+
+  const bigMqResult = window.matchMedia('(min-width: 1200px)');
+
+  resizeBig(bigMqResult.matches);
+  
+  bigMqResult.addEventListener('change', e => {
+    resizeBig(e.matches);
+  });
+
+  const smallMqResult = window.matchMedia('(min-width: 600px)');
+
+  resizeSmall(smallMqResult.matches);
+  
+  smallMqResult.addEventListener('change', e => {
+    resizeSmall(e.matches);
   });
 
   watermarksDark.onload = () => {
