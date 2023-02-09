@@ -129,19 +129,30 @@ function CreatorCanvas(initialData: CreatorFormData) {
       drawForeground(data);
     }
   };
+  
+  let smallMatches: boolean = false;
+  let bigMatches: boolean = false;
 
   const resizeSmall = (matches: boolean) => {
+    if (bigMatches) {
+      return;
+    }
+
     if (matches) {
-      canvas.width = 296;
-      canvas.height = 296;
-    } else {
       canvas.width = 400;
       canvas.height = 400;
+    } else {
+      canvas.width = 296;
+      canvas.height = 296;
     }
     updateVisibleCanvas();
   }
 
   const resizeBig = (matches: boolean) => {
+    if (smallMatches) {
+      return;
+    }
+
     if (matches) {
       canvas.width = 400;
       canvas.height = 400;
@@ -152,20 +163,23 @@ function CreatorCanvas(initialData: CreatorFormData) {
     updateVisibleCanvas();
   }
 
-  const bigMqResult = window.matchMedia('(min-width: 1200px)');
 
-  resizeBig(bigMqResult.matches);
+  const bigMqResult = window.matchMedia('(min-width: 1200px)');
+  bigMatches = bigMqResult.matches;
+  resizeBig(bigMatches);
   
   bigMqResult.addEventListener('change', e => {
-    resizeBig(e.matches);
+    bigMatches = e.matches;
+    resizeBig(bigMatches);
   });
 
   const smallMqResult = window.matchMedia('(min-width: 600px)');
-
-  resizeSmall(smallMqResult.matches);
+  smallMatches = smallMqResult.matches;
+  resizeSmall(smallMatches);
   
   smallMqResult.addEventListener('change', e => {
-    resizeSmall(e.matches);
+    smallMatches = e.matches;
+    resizeSmall(smallMatches);
   });
 
   watermarksDark.onload = () => {
