@@ -132,8 +132,8 @@ function CreatorCanvas(initialData: CreatorFormData) {
 
   const resizeSmall = (matches: boolean) => {
     if (matches) {
-      canvas.width = 600;
-      canvas.height = 600;
+      canvas.width = 296;
+      canvas.height = 296;
     } else {
       canvas.width = 400;
       canvas.height = 400;
@@ -146,8 +146,8 @@ function CreatorCanvas(initialData: CreatorFormData) {
       canvas.width = 400;
       canvas.height = 400;
     } else {
-      canvas.width = 320;
-      canvas.height = 320;
+      canvas.width = 600;
+      canvas.height = 600;
     }
     updateVisibleCanvas();
   }
