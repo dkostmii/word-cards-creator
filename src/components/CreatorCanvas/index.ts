@@ -5,6 +5,7 @@ import CanvasImage from './canvasImage';
 
 import './index.sass';
 import watermarksDarkImageData from '../../img/watermarks_dark.svg';
+import quizImageData from '../../img/logo_quiz.svg';
 
 
 const fillColor = '#fff';
@@ -78,6 +79,9 @@ function CreatorCanvas(initialData: CreatorFormData) {
   const watermarksDark = new Image();
   watermarksDark.src = watermarksDarkImageData;
 
+  const logoQuiz = new Image();
+  logoQuiz.src = quizImageData;
+
   const drawOnto = (sourceCanvas: HTMLCanvasElement, destCanvas: HTMLCanvasElement, destCanvasCtx: CanvasRenderingContext2D) => {
     destCanvasCtx.drawImage(sourceCanvas, 0, 0, destCanvas.width, destCanvas.height);
   }
@@ -105,6 +109,11 @@ function CreatorCanvas(initialData: CreatorFormData) {
     if (hasImage(data)) {
       await image.load(data.imageDataUrl)
       .then(() => {
+        if (data.quiz) {
+          image.blur = 15;
+        } else {
+          image.blur = 0;
+        }
         image.draw(canvas, ctx, updateVisibleCanvas);
         image.setupMove(canvas, ctx, visibleCanvas, updateVisibleCanvas);
       });
@@ -116,6 +125,16 @@ function CreatorCanvas(initialData: CreatorFormData) {
     const originalWordPosition = 0.2 * canvas.width;
 
     ctx.save();
+    if (data.quiz) {
+      ctx.drawImage(
+        logoQuiz,
+        0.135 * canvas.width,
+        0.45 * canvas.height,
+        2.15 * logoQuiz.width / 1000 * canvas.width,
+        2.15 * logoQuiz.height / 1000 * canvas.height
+      );
+    }
+
     const highlightGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
     highlightGradient.addColorStop(0, "#ffffffff");
     highlightGradient.addColorStop(0.5, "#ffffff8f");
@@ -134,12 +153,12 @@ function CreatorCanvas(initialData: CreatorFormData) {
     ctx.textBaseline = 'top';
     
     ctx.font = `${originalWordFontSize}px Archivo`;
-
     ctx.fillText(data.originalWord, 0.15 * canvas.width, originalWordPosition);
 
-    ctx.font = `italic ${translatedWordFontSize}px "Exo 2"`;
-
-    ctx.fillText('– ' + data.translatedWord, 0.15 * canvas.width, CalcGap(originalWordFontSize, originalWordPosition, canvas));
+    if (!data.quiz) {
+      ctx.font = `italic ${translatedWordFontSize}px "Exo 2"`;
+      ctx.fillText('– ' + data.translatedWord, 0.15 * canvas.width, CalcGap(originalWordFontSize, originalWordPosition, canvas));
+    }
 
     ctx.drawImage(
       watermarksDark,
@@ -159,6 +178,9 @@ function CreatorCanvas(initialData: CreatorFormData) {
     const exportCtx = exportCanvas.getContext("2d");
 
     drawBackground(exportCanvas, exportCtx);
+    if (!data.quiz) {
+      image.blur = 0;
+    }
     image.draw(exportCanvas, exportCtx);
     drawForeground(data, exportCanvas, exportCtx);
 
@@ -178,12 +200,21 @@ function CreatorCanvas(initialData: CreatorFormData) {
 
   const update = (data: CreatorFormData, force: boolean = false) => {
     const operations: Promise<void>[] = [];
-    if (force || formData.originalWord !== data.originalWord || formData.translatedWord !== data.translatedWord) {
+    if (
+      force ||
+      formData.originalWord !== data.originalWord ||
+      formData.translatedWord !== data.translatedWord ||
+      formData.quiz !== data.quiz) {
       operations.push(onWordsChanged(data));
     }
 
     if (hasImage(data)) {
-      if (force || !hasImage(formData) || formData.imageDataUrl !== data.imageDataUrl) {
+      if (
+        force ||
+        !hasImage(formData) ||
+        formData.imageDataUrl !== data.imageDataUrl ||
+        formData.quiz !== data.quiz
+        ) {
         operations.push(onImageChanged(data));
       }
     }
@@ -199,12 +230,12 @@ function CreatorCanvas(initialData: CreatorFormData) {
   };
 
   watermarksDark.onload = () => {
-    update(initialData, true);
+    update(formData, true);
   };
 
   // After loading fonts
   setTimeout(() => {
-    update(initialData, true);
+    update(formData, true);
   }, 2000);
 
   const save = () => {
@@ -221,11 +252,21 @@ function CreatorCanvas(initialData: CreatorFormData) {
       .replace("ü", 'u')
       .replace("ß", 'ss');
 
-    link.setAttribute('download', `Картка ${wordEscaped}.png`);
+    link.setAttribute('download', `${formData.quiz ? "Відгадайка" : "Картка"} ${wordEscaped}.png`);
     link.setAttribute('href', imageDataUrl);
 
     link.click();
-  }
+
+    if (formData.quiz) {
+      const originalData = { ...formData, quiz: false };
+      const originalImageDataUrl = exportFinalDataUrl(originalData);
+      
+      link.setAttribute('download', `Картка ${wordEscaped}.png`);
+      link.setAttribute('href', originalImageDataUrl);
+
+      link.click();
+    }
+  };
 
   return {
     creatorCanvasContainer,

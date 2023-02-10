@@ -11,8 +11,9 @@ function Creator() {
 
   let creatorFormData: CreatorFormData = {
     originalWord: "Das Wort",
-    translatedWord: "слово"
-  }
+    translatedWord: "слово",
+    quiz: false,
+  };
 
   const { creatorCanvasContainer, update: updateCanvas, save } = CreatorCanvas(creatorFormData);
   

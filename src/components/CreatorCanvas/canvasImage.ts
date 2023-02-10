@@ -12,11 +12,14 @@ class CanvasImage {
   private canMove: boolean;
   private moving: boolean;
 
+  public blur: number;
+
   constructor() {
     this.offsetX = 0;
     this.offsetY = 0;
     this.offsetClampX = 0;
     this.offsetClampY = 0;
+    this.blur = 0;
   }
 
   async load(imageDataUrl: string): Promise<void> {
@@ -77,7 +80,12 @@ class CanvasImage {
     centerOffsetX += this.offsetX;
     centerOffsetY += this.offsetY;
 
+    ctx.save();
+    if (this.blur > 0) {
+      ctx.filter = `blur(${clamp(this.blur, 0, 150)}px)`;
+    }
     ctx.drawImage(this.image, centerOffsetX * canvas.width, centerOffsetY * canvas.height, projectedWidth, projectedHeight);
+    ctx.restore();
 
     if (afterDraw instanceof Function) {
       afterDraw();
@@ -135,12 +143,12 @@ class CanvasImage {
     visibleCanvas.addEventListener('touchstart', e => {
       prevTouchX = e.touches[0].clientX;
       prevTouchY = e.touches[0].clientY;
-    });
+    }, { passive: true });
 
     visibleCanvas.addEventListener('touchend', () => {
       prevTouchX = null;
       prevTouchY = null;
-    });
+    }, { passive: true });
 
     visibleCanvas.addEventListener('touchmove', e => {
       const touchX = e.touches[0].clientX;
@@ -157,7 +165,7 @@ class CanvasImage {
       const dy = map(touchDy, -1 * visibleCanvas.height / 2, visibleCanvas.height / 2, -0.33, 0.33, true);
 
       moveImage(dx, dy);
-    });
+    }, { passive: true });
   }
 }
 

@@ -1,0 +1,21 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24">
+  
+  <defs>
+    <style>
+      .check {
+        stroke: #212ec9;
+        stroke-width: 1.5px;
+        fill: none;
+      }
+    </style>
+  </defs>
+
+  <g transform-origin="12 12" transform="scale(1.5 1.5)">
+    <rect fill="none" stroke="none" width="24" height="24" />
+    <path class="check" d="M 7, 12 l 3 3 l 7 -7" />
+  </g>
+</svg>

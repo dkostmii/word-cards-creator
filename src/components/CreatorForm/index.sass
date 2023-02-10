@@ -63,4 +63,39 @@ $inputPadding: 0.5rem
   &__word__translated > input
     font-family: "Exo 2", sans-serif
     font-style: italic
-    
+
+
+.input
+  .checkbox label
+    display: flex
+    align-items: center
+    gap: 1rem
+    padding-left: $inputPadding
+
+    cursor: pointer
+
+  input[type="checkbox"]
+    display: none
+
+  & .check
+    border: 2px $fillColor solid
+    width: 1.25rem
+    height: 1.25rem
+
+    position: relative
+
+  & input[type="checkbox"]:checked ~ label .check
+    background-color: $fillColor
+
+    &::before
+      content: ""
+      background-image: url(../../img/check.svg)
+      background-repeat: no-repeat
+      background-size: 2.5rem
+
+      position: absolute
+      top: -0.75rem
+      left: -0.25rem
+      width: 2.5rem
+      height: 2.5rem
+      z-index: 2

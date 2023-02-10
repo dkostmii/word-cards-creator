@@ -4,6 +4,7 @@ export interface CreatorFormData {
   originalWord: string,
   translatedWord: string,
   imageDataUrl?: string,
+  quiz: boolean,
 };
 
 const maxFileSizeMb = 10;
@@ -48,7 +49,7 @@ function CreatorForm(
   initialFormData: CreatorFormData,
   onChange?: (data: CreatorFormData) => void) {
 
-    let formData = initialFormData;
+  let formData = initialFormData;
 
   const creatorFormContainer = document.createElement('div');
   creatorFormContainer.classList.add('creator__form');
@@ -111,7 +112,9 @@ function CreatorForm(
       .then(dataUrl => {
         if (dataUrl) {
           formData = { ...formData, imageDataUrl: dataUrl };
-          onChange(formData);
+          if (onChange instanceof Function) {
+            onChange(formData);
+          }
         }
       });
     } else {
@@ -124,7 +127,38 @@ function CreatorForm(
     fileInput.click();
   });
 
-  creatorFormContainer.append(wordInputLabel, translatedWordInputLabel, fileInputLabel);
+  const quizCheckboxInputLabel = document.createElement('label');
+  quizCheckboxInputLabel.classList.add('input');
+  quizCheckboxInputLabel.innerHTML = '<span>Відгадайки<br>Ми створимо дві картинки: одну звичайну й іншу з відгадайкою</span>';
+
+  const quizCheckboxInputContainer = document.createElement('div');
+  quizCheckboxInputContainer.classList.add('checkbox');
+
+  const quizCheckboxInput = document.createElement('input');
+  quizCheckboxInput.type = 'checkbox';
+  quizCheckboxInput.id = 'quiz';
+  quizCheckboxInput.checked = formData.quiz;
+  quizCheckboxInput.addEventListener('change', () => {
+    formData = { ...formData, quiz: quizCheckboxInput.checked };
+    if (onChange instanceof Function) {
+      onChange(formData);
+    }
+  });
+
+  const quizCheckboxInnerLabel = document.createElement('label');
+  quizCheckboxInnerLabel.setAttribute('for', 'quiz');
+
+  const check = document.createElement('div');
+  check.classList.add('check');
+
+  quizCheckboxInnerLabel.appendChild(check);
+  quizCheckboxInnerLabel.appendChild(document.createTextNode('Створити відгадайку'));
+
+  quizCheckboxInputContainer.append(quizCheckboxInput, quizCheckboxInnerLabel);
+
+  quizCheckboxInputLabel.appendChild(quizCheckboxInputContainer);
+
+  creatorFormContainer.append(wordInputLabel, translatedWordInputLabel, fileInputLabel, quizCheckboxInputLabel);
 
   if (onChange instanceof Function) {
     wordInput.addEventListener('change', () => {
