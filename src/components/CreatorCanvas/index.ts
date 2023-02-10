@@ -23,19 +23,19 @@ function CalcGap(originalWordFontSize: number, originalWordPosition: number, can
 function CalcFontSizes(data: CreatorFormData, canvas: HTMLCanvasElement) {
   const originalWordBaseline = mapRanges(
     data.originalWord.length,
-    [ [0, 5], [6, 12], [13, 19], [20, 35], [36, 999999] ],
-    [ 3.25, 2.25, 1, 0.75, 0.45 ],
+    [ [0, 4], [5, 8], [9, 12], [13, 17], [18, 35], [36, 42], [43, 999999] ],
+    [ 3.25, 2.25, 1.33, 1, 0.75, 0.5, 0.25 ],
   );
 
   const translatedWordBaseline = mapRanges(
     data.translatedWord.length,
-    [ [0, 5], [6, 12], [13, 19], [20, 35], [36, 999999] ],
-    [ 1.33, 0.75, 0.55, 0.25, 0.0625 ],
+    [ [0, 5], [6, 12], [13, 19], [20, 35], [36, 42], [43, 999999] ],
+    [ 1.33, 0.825, 0.65, 0.33, 0.175, 0.1 ],
   );
 
   return {
     originalWordFontSize: originalWordBaseline * 0.056 * canvas.width,
-    translatedWordFontSize: (originalWordBaseline * 0.33 + translatedWordBaseline * 0.66) * 0.048 * canvas.width,
+    translatedWordFontSize: (originalWordBaseline * 0.33 + translatedWordBaseline * 0.66) * 0.056 * canvas.width,
   };
 }
 
