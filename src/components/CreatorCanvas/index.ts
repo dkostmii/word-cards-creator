@@ -1,4 +1,5 @@
 import clamp from '../../functions/clamp';
+import mapRanges from '../../functions/mapRanges';
 import { CreatorFormData } from '../CreatorForm';
 import CanvasImage from './canvasImage';
 
@@ -20,12 +21,21 @@ function CalcGap(originalWordFontSize: number, originalWordPosition: number, can
 }
 
 function CalcFontSizes(data: CreatorFormData, canvas: HTMLCanvasElement) {
-  const originalWordBaseline = clamp(12 / data.originalWord.length, 0.45, 4);
-  const translatedWordBaseline = clamp(8 / data.translatedWord.length, 0.45, 4);
+  const originalWordBaseline = mapRanges(
+    data.originalWord.length,
+    [ [0, 5], [6, 12], [13, 19], [20, 35], [36, 999999] ],
+    [ 3.25, 2.25, 1, 0.75, 0.45 ],
+  );
+
+  const translatedWordBaseline = mapRanges(
+    data.translatedWord.length,
+    [ [0, 5], [6, 12], [13, 19], [20, 35], [36, 999999] ],
+    [ 1.33, 0.75, 0.55, 0.25, 0.0625 ],
+  );
 
   return {
-    originalWordFontSize: originalWordBaseline * 56 / 1000 * canvas.width,
-    translatedWordFontSize: (originalWordBaseline * 32 + translatedWordBaseline * 12) / 1000 * canvas.width,
+    originalWordFontSize: originalWordBaseline * 0.056 * canvas.width,
+    translatedWordFontSize: (originalWordBaseline * 0.33 + translatedWordBaseline * 0.66) * 0.048 * canvas.width,
   };
 }
 
