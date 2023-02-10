@@ -1,5 +1,6 @@
 import clamp from '../../functions/clamp';
 import { CreatorFormData } from '../CreatorForm';
+import CanvasImage from './canvasImage';
 
 import './index.sass';
 import watermarksDarkImageData from '../../img/watermarks_dark.svg';
@@ -8,20 +9,28 @@ import watermarksDarkImageData from '../../img/watermarks_dark.svg';
 const fillColor = '#fff';
 const accentColor = '#212ec9';
 
-function CalcGap(originalWordFontSize: number, originalWordPosition: number) {
-  const baseline = originalWordFontSize / 56;
+function CalcGap(originalWordFontSize: number, originalWordPosition: number, canvas: HTMLCanvasElement) {
+  const baseline = originalWordFontSize / (0.056 * canvas.width);
 
-  return clamp(12 * baseline, 12, 50) + originalWordFontSize + originalWordPosition;
+  const min = 0.012 * canvas.width;
+  const max = 0.05 * canvas.width;
+  const value = 0.012 * canvas.width * baseline;
+
+  return clamp(value, min, max) + originalWordFontSize + originalWordPosition;
 }
 
-function CalcFontSizes(data: CreatorFormData) {
+function CalcFontSizes(data: CreatorFormData, canvas: HTMLCanvasElement) {
   const originalWordBaseline = clamp(12 / data.originalWord.length, 0.45, 4);
   const translatedWordBaseline = clamp(8 / data.translatedWord.length, 0.45, 4);
 
   return {
-    originalWordFontSize: originalWordBaseline * 56,
-    translatedWordFontSize: originalWordBaseline * 32 + translatedWordBaseline * 12,
+    originalWordFontSize: originalWordBaseline * 56 / 1000 * canvas.width,
+    translatedWordFontSize: (originalWordBaseline * 32 + translatedWordBaseline * 12) / 1000 * canvas.width,
   };
+}
+
+function hasImage(data: CreatorFormData) {
+  return 'imageDataUrl' in data && typeof data.imageDataUrl === 'string' && data.imageDataUrl.length > 0;
 }
 
 function CreatorCanvas(initialData: CreatorFormData) {
@@ -30,121 +39,169 @@ function CreatorCanvas(initialData: CreatorFormData) {
   const creatorCanvasContainer = document.createElement('div');
   creatorCanvasContainer.classList.add('creator__canvas');
 
-  const bufferCanvas = document.createElement("canvas");
-  bufferCanvas.width = 1000;
-  bufferCanvas.height = 1000;
+  const visibleCanvas = document.createElement("canvas");
+  const visibleCtx = visibleCanvas.getContext("2d");
+  visibleCanvas.width = 600;
+  visibleCanvas.height = 600;
 
-  const canvas = document.createElement("canvas");
-  canvas.width = 600;
-  canvas.height = 600;
-  const ctx = canvas.getContext("2d");
+  // Offscreen layers
+  const foregroundCanvas = document.createElement("canvas");
+  const foregroundCtx = foregroundCanvas.getContext("2d");
+  foregroundCanvas.width = visibleCanvas.width;
+  foregroundCanvas.height = visibleCanvas.height;
 
-  let { originalWordFontSize, translatedWordFontSize } = CalcFontSizes(initialData);
-  const originalWordPosition = 200;
+  const imageCanvas = document.createElement("canvas");
+  const imageCtx = imageCanvas.getContext("2d");
+  imageCanvas.width = visibleCanvas.width;
+  imageCanvas.height = visibleCanvas.height;
 
-  creatorCanvasContainer.appendChild(canvas);
+  visibleCanvas.addEventListener('resize', () => {
+    foregroundCanvas.width = visibleCanvas.width;
+    foregroundCanvas.height = visibleCanvas.height;
+    imageCanvas.width = visibleCanvas.width;
+    imageCanvas.height = visibleCanvas.height;
+  });
 
-  const bufferCtx = bufferCanvas.getContext("2d");
+  //creatorCanvasContainer.append(canvas, foregroundCanvas, imageCanvas);
+  creatorCanvasContainer.appendChild(visibleCanvas);
+
   const watermarksDark = new Image();
   watermarksDark.src = watermarksDarkImageData;
 
-  const drawWatermarks = () => {
-    bufferCtx.drawImage(watermarksDark, 153.440, 799.871);
+  const drawOnto = (sourceCanvas: HTMLCanvasElement, destCanvas: HTMLCanvasElement, destCanvasCtx: CanvasRenderingContext2D) => {
+    destCanvasCtx.drawImage(sourceCanvas, 0, 0, destCanvas.width, destCanvas.height);
+  }
+
+  const clearCanvas = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  };
+
+  const drawBackground = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) => {
+    ctx.save();
+    ctx.fillStyle = accentColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
   }
 
   const updateVisibleCanvas = () => {
-    const bufferImageDataUrl = bufferCanvas.toDataURL('image/png');
-    const bufferImg = new Image();
-    bufferImg.src = bufferImageDataUrl;
+    drawBackground(visibleCanvas, visibleCtx);
+    drawOnto(imageCanvas, visibleCanvas, visibleCtx);
+    drawOnto(foregroundCanvas, visibleCanvas, visibleCtx);
+  };
 
-    bufferImg.onload = () => {
-      ctx.drawImage(bufferImg, 0, 0, canvas.width, canvas.height);
+  let image: CanvasImage = new CanvasImage();
+
+  const drawImage = async (data: CreatorFormData, canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D): Promise<void> => {
+    if (hasImage(data)) {
+      await image.load(data.imageDataUrl)
+      .then(() => {
+        image.draw(canvas, ctx, updateVisibleCanvas);
+        image.setupMove(canvas, ctx, visibleCanvas, updateVisibleCanvas);
+      });
     }
-  }
+  };
 
-  const drawForeground = (data: CreatorFormData) => {
-    const highlightGradient = bufferCtx.createLinearGradient(0, 0, 0, bufferCanvas.height);
+  const drawForeground = (data: CreatorFormData, canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) => {
+    const { originalWordFontSize, translatedWordFontSize } = CalcFontSizes(data, canvas);
+    const originalWordPosition = 0.2 * canvas.width;
+
+    ctx.save();
+    const highlightGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
     highlightGradient.addColorStop(0, "#ffffffff");
     highlightGradient.addColorStop(0.5, "#ffffff8f");
     highlightGradient.addColorStop(1, '#ffffff00');
 
-    bufferCtx.fillStyle = highlightGradient;
-    bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
+    ctx.fillStyle = highlightGradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    bufferCtx.globalCompositeOperation = 'multiply';
-    bufferCtx.fillStyle = "#212ec9bf";
-    bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.fillStyle = "#212ec9bf";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    bufferCtx.globalCompositeOperation = 'source-over';
-    bufferCtx.fillStyle = fillColor;
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = fillColor;
 
-    bufferCtx.textBaseline = 'top';
+    ctx.textBaseline = 'top';
     
-    bufferCtx.font = `${originalWordFontSize}px Archivo`;
+    ctx.font = `${originalWordFontSize}px Archivo`;
 
-    bufferCtx.fillText(data.originalWord, 150, originalWordPosition);
+    ctx.fillText(data.originalWord, 0.15 * canvas.width, originalWordPosition);
 
-    bufferCtx.font = `italic ${translatedWordFontSize}px "Exo 2"`;
+    ctx.font = `italic ${translatedWordFontSize}px "Exo 2"`;
 
-    bufferCtx.fillText('– ' + data.translatedWord, 150, CalcGap(originalWordFontSize, originalWordPosition));
+    ctx.fillText('– ' + data.translatedWord, 0.15 * canvas.width, CalcGap(originalWordFontSize, originalWordPosition, canvas));
 
-    drawWatermarks();
-    updateVisibleCanvas();
+    ctx.drawImage(
+      watermarksDark,
+      0.15344 * canvas.width,
+      0.799871 * canvas.height,
+      canvas.width / 1000 * watermarksDark.width,
+      canvas.height / 1000 * watermarksDark.height);
+
+    ctx.restore();
   }
 
-  const update = (data: CreatorFormData) => {
-    formData = data;
+  const exportFinalDataUrl = (data: CreatorFormData) => {
+    const exportCanvas = document.createElement("canvas");
+    exportCanvas.width = 512;
+    exportCanvas.height = 512;
 
-    const newFontSizes = CalcFontSizes(data);
-    originalWordFontSize = newFontSizes.originalWordFontSize;
-    translatedWordFontSize = newFontSizes.translatedWordFontSize;
+    const exportCtx = exportCanvas.getContext("2d");
 
-    bufferCtx.fillStyle = accentColor;
-    bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
-    
-    // TODO: Add image provided by user here
-    if ('imageDataUrl' in data && typeof data.imageDataUrl === 'string' && data.imageDataUrl.length > 0) {
-      const image = new Image();
-      image.src = data.imageDataUrl;
-      image.onload = () => {
-        const aspectRatio = image.width / image.height;
-        if (aspectRatio < 1) {
-          // Portrait
-          const resiprocalAspect = 1 / aspectRatio;
-          const projectedHeight = bufferCanvas.width * resiprocalAspect;
-          const offsetY = -1 * (projectedHeight - bufferCanvas.height) / 2;
+    drawBackground(exportCanvas, exportCtx);
+    image.draw(exportCanvas, exportCtx);
+    drawForeground(data, exportCanvas, exportCtx);
 
-          bufferCtx.drawImage(image, 0, offsetY, bufferCanvas.width, projectedHeight);
-        } else if (aspectRatio >= 1) {
-          // Landscape
-          const projectedWidth = bufferCanvas.height * aspectRatio;
-          const offsetX = -1 * (projectedWidth - bufferCanvas.width) / 2;
-
-          bufferCtx.drawImage(image, offsetX, 0, projectedWidth, bufferCanvas.height);
-        }
-
-        drawForeground(data);
-      }
-    } else {
-      drawForeground(data);
-    }
+    return exportCanvas
+      .toDataURL("image/png")
+      .replace("image/png", "image/octet-stream");
   };
-  
+
+  const onWordsChanged = async (data: CreatorFormData) => {
+    clearCanvas(foregroundCanvas, foregroundCtx);
+    drawForeground(data, foregroundCanvas, foregroundCtx);
+  };
+
+  const onImageChanged = async (data: CreatorFormData) => {
+    await drawImage(data, imageCanvas, imageCtx);
+  };
+
+  const update = (data: CreatorFormData, force: boolean = false) => {
+    const operations: Promise<void>[] = [];
+    if (force || formData.originalWord !== data.originalWord || formData.translatedWord !== data.translatedWord) {
+      operations.push(onWordsChanged(data));
+    }
+
+    if (hasImage(data)) {
+      if (force || !hasImage(formData) || formData.imageDataUrl !== data.imageDataUrl) {
+        operations.push(onImageChanged(data));
+      }
+    }
+
+    if (operations.length > 0) {
+      Promise.all(operations)
+        .then(() => {
+          updateVisibleCanvas();
+        });
+    }
+
+    formData = data;
+  };
+
   watermarksDark.onload = () => {
-    update(initialData);
+    update(initialData, true);
   };
 
   // After loading fonts
   setTimeout(() => {
-    update(initialData);
+    update(initialData, true);
   }, 2000);
 
   const save = () => {
     if (formData.originalWord.length < 1 || formData.translatedWord.length < 1)
       return;
 
-    const imageDataUrl = bufferCanvas.toDataURL("image/png")
-      .replace("image/png", "image/octet-stream");
+    const imageDataUrl = exportFinalDataUrl(formData);
 
     const link = document.createElement('a');
     const wordEscaped = formData.originalWord.toLowerCase()
