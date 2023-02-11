@@ -172,16 +172,22 @@ function CreatorCanvas(initialData: CreatorFormData) {
 
   const exportFinalDataUrl = (data: CreatorFormData) => {
     const exportCanvas = document.createElement("canvas");
-    exportCanvas.width = 512;
-    exportCanvas.height = 512;
+    exportCanvas.width = 1024;
+    exportCanvas.height = 1024;
 
     const exportCtx = exportCanvas.getContext("2d");
 
     drawBackground(exportCanvas, exportCtx);
+    const prevBlurValue = image.blur;
+
     if (!data.quiz) {
       image.blur = 0;
+    } else {
+      image.blur = image.blur * exportCanvas.width / visibleCanvas.width;
     }
     image.draw(exportCanvas, exportCtx);
+    image.blur = prevBlurValue;
+
     drawForeground(data, exportCanvas, exportCtx);
 
     return exportCanvas

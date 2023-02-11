@@ -83,6 +83,8 @@ class CanvasImage {
     ctx.save();
     if (this.blur > 0) {
       ctx.filter = `blur(${clamp(this.blur, 0, 150)}px)`;
+    } else {
+      ctx.filter = '';
     }
     ctx.drawImage(this.image, centerOffsetX * canvas.width, centerOffsetY * canvas.height, projectedWidth, projectedHeight);
     ctx.restore();
@@ -103,16 +105,14 @@ class CanvasImage {
 
     visibleCanvas.style.setProperty('cursor', 'grab');
 
+    const blurValue: number = this.blur;
+
     const onMouseDown = () => {
       this.moving = true;
       visibleCanvas.style.setProperty('cursor', 'grabbing');
+      this.blur = 0;
     };
-
-    const onMouseUp = () => {
-      this.moving = false;
-      visibleCanvas.style.setProperty('cursor', 'grab');
-    }
-
+    
     const moveImage = (dx: number, dy: number) => {
       dx = map(dx, -1, 1, -1 * this.offsetClampX, this.offsetClampX, true);
       dy = map(dy, -1, 1, -1 * this.offsetClampY, this.offsetClampY, true);
@@ -123,6 +123,13 @@ class CanvasImage {
       this.draw(canvas, ctx, afterMove);
     };
 
+    const onMouseUp = () => {
+      this.moving = false;
+      visibleCanvas.style.setProperty('cursor', 'grab');
+      this.blur = blurValue;
+      moveImage(0, 0);
+    };
+    
     visibleCanvas.addEventListener('mousedown', onMouseDown);
     window.addEventListener('mouseup', onMouseUp);
 
@@ -143,11 +150,14 @@ class CanvasImage {
     visibleCanvas.addEventListener('touchstart', e => {
       prevTouchX = e.touches[0].clientX;
       prevTouchY = e.touches[0].clientY;
+      this.blur = 0;
     }, { passive: true });
 
     visibleCanvas.addEventListener('touchend', () => {
       prevTouchX = null;
       prevTouchY = null;
+      this.blur = blurValue;
+      moveImage(0, 0);
     }, { passive: true });
 
     visibleCanvas.addEventListener('touchmove', e => {
