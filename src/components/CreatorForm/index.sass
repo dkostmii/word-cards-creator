@@ -70,6 +70,20 @@ $inputPadding: 0.5rem
     font-family: "Exo 2", sans-serif
     font-style: italic
 
+  @media screen and (max-width: 600px)
+    &__file__button
+      max-width: 93vw
+      white-space: nowrap
+      overflow: hidden
+      text-overflow: ellipsis
+
+  @media screen and (min-width: 1200px)
+    &__file__button
+      max-width: 417px
+      white-space: nowrap
+      overflow: hidden
+      text-overflow: ellipsis
+
 
 .input
   .checkbox label
