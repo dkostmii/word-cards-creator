@@ -7,9 +7,11 @@
     "build:dev": "webpack --mode=development",
     "build:prod": "webpack --mode=production --node-env=production",
     "watch": "webpack --watch",
-    "serve": "webpack serve"
+    "serve": "webpack serve",
+    "serve:static": "npm run build:prod && browser-sync dist -w"
   },
   "devDependencies": {
+    "browser-sync": "^2.27.11",
     "copy-webpack-plugin": "^11.0.0",
     "css-loader": "^6.7.3",
     "html-webpack-plugin": "^5.5.0",
