@@ -2,13 +2,17 @@
 
 $inputPadding: 0.5rem
 
+@mixin noSelect()
+  user-select: none
+  -moz-user-select: none
+  -webkit-user-select: none
+
 .creator__form
   display: flex
   justify-content: space-between
   align-items: center
   flex-wrap: wrap
   gap: 3rem
-    flex-wrap: wrap
 
 .button
   padding: $inputPadding
@@ -20,6 +24,7 @@ $inputPadding: 0.5rem
   border: none
   color: $accentColor
   cursor: pointer
+  @include noSelect()
 
   &__alt
     background: none
@@ -44,6 +49,7 @@ $inputPadding: 0.5rem
 
   & > span
     padding-left: $inputPadding
+    @include noSelect()
 
   & > input
     background: transparent
